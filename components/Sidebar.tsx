@@ -1,12 +1,14 @@
 import React from 'react';
-import { User, AppView } from '../types';
+import { User, AppView, Role } from '../types';
 import { 
     HomeIcon, 
     UsersGroupIcon, 
     ChartBarIcon, 
     Cog6ToothIcon, 
     LogoutIcon,
-    UserCircleIcon
+    UserCircleIcon,
+    SchoolLogoIcon,
+    UsersIcon
 } from './icons';
 
 interface SidebarProps {
@@ -44,8 +46,9 @@ const NavItem: React.FC<{
 const Sidebar: React.FC<SidebarProps> = ({ user, currentView, onNavigate, onLogout }) => {
   return (
     <aside className="w-64 bg-white border-r border-slate-200 flex flex-col h-screen sticky top-0">
-      <div className="flex items-center justify-center h-16 border-b border-slate-200">
-        <h1 className="text-2xl font-bold text-indigo-600">RFID Attend</h1>
+      <div className="flex items-center justify-center h-16 border-b border-slate-200 px-4">
+        <SchoolLogoIcon className="w-8 h-8 text-indigo-600" />
+        <h1 className="text-xl font-bold text-indigo-600 ml-2">ChildPICK APP</h1>
       </div>
       <div className="flex-grow p-4">
         <ul className="space-y-2">
@@ -67,6 +70,14 @@ const Sidebar: React.FC<SidebarProps> = ({ user, currentView, onNavigate, onLogo
             isActive={currentView === 'reports'} 
             onClick={() => onNavigate('reports')} 
           />
+          {user.role === Role.SUPER_ADMIN && (
+             <NavItem 
+                icon={<UsersIcon className="w-6 h-6" />} 
+                label="User Management" 
+                isActive={currentView === 'user_management'} 
+                onClick={() => onNavigate('user_management')} 
+            />
+          )}
            <NavItem 
             icon={<Cog6ToothIcon className="w-6 h-6" />} 
             label="Settings" 

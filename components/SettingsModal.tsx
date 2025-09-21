@@ -17,7 +17,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setLocalSettings(prev => ({ ...prev, [name]: parseInt(value, 10) }));
+    setLocalSettings(prev => ({ ...prev, [name]: value }));
   };
   
   const handleSave = () => {
@@ -39,33 +39,31 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         <div className="p-6 space-y-4">
           <div>
             <label htmlFor="lateThreshold" className="block text-sm font-medium text-slate-700 mb-1">
-              Late Check-in Threshold (Hour)
+              Late Check-in Threshold
             </label>
             <input
-              type="number"
+              type="time"
               id="lateThreshold"
               name="lateThreshold"
               value={localSettings.lateThreshold}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              min="0" max="23"
             />
-            <p className="text-xs text-slate-500 mt-1">Students checking in at or after this hour are marked 'Late'.</p>
+            <p className="text-xs text-slate-500 mt-1">Students checking in at or after this time are marked 'Late'.</p>
           </div>
           <div>
             <label htmlFor="lateCheckOutThreshold" className="block text-sm font-medium text-slate-700 mb-1">
-              Late Check-out Threshold (Hour)
+              Late Check-out Threshold
             </label>
             <input
-              type="number"
+              type="time"
               id="lateCheckOutThreshold"
               name="lateCheckOutThreshold"
               value={localSettings.lateCheckOutThreshold}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              min="0" max="23"
             />
-             <p className="text-xs text-slate-500 mt-1">Students checking out at or after this hour are marked 'Late'.</p>
+             <p className="text-xs text-slate-500 mt-1">Students checking out at or after this time are marked 'Late'.</p>
           </div>
         </div>
         <div className="p-4 bg-slate-50 flex justify-end space-x-2 rounded-b-lg">

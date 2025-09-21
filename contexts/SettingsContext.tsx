@@ -1,8 +1,8 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 
 interface AppSettings {
-  lateThreshold: number; // Hour (24h format)
-  lateCheckOutThreshold: number; // Hour (24h format)
+  lateThreshold: string; // Time format HH:MM
+  lateCheckOutThreshold: string; // Time format HH:MM
 }
 
 interface SettingsContextType {
@@ -11,8 +11,8 @@ interface SettingsContextType {
 }
 
 const defaultSettings: AppSettings = {
-  lateThreshold: 9,
-  lateCheckOutThreshold: 16, // 4 PM
+  lateThreshold: '09:00',
+  lateCheckOutThreshold: '16:00', // 4:00 PM
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

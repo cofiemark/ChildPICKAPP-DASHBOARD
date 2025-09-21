@@ -1,5 +1,5 @@
 {
-  "name": "RFID Student Attendance Dashboard",
+  "name": "ChildPICK APP",
   "description": "A modern dashboard to display real-time student attendance data from an RFID check-in/check-out system. Includes features for viewing student status, check-in/out times, and manual entry for exceptions.",
   "requestFramePermissions": []
 }

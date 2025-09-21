@@ -1,15 +1,17 @@
 import React, { useMemo, useState } from 'react';
 import { AttendanceRecord, AttendanceStatus } from '../types';
+import { useSettings } from '../contexts/SettingsContext';
 
 interface AttendanceChartProps {
   trendRecords: AttendanceRecord[];
   overviewRecords: AttendanceRecord[];
 }
 
-const statusColors: Record<AttendanceStatus, string> = {
+const statusColors: Record<AttendanceStatus | 'Late', string> = {
     [AttendanceStatus.PRESENT]: '#34d399', // emerald-400
     [AttendanceStatus.CHECKED_OUT]: '#38bdf8', // sky-400
     [AttendanceStatus.ABSENT]: '#94a3b8', // slate-400
+    'Late': '#f59e0b', // amber-500
 };
 
 // --- Tooltip Component ---
@@ -25,18 +27,35 @@ const Tooltip: React.FC<{ content: React.ReactNode, position: { x: number, y: nu
     );
 };
 
+// --- Helper function to check for lateness ---
+const isEventLate = (time: Date | null, type: 'check-in' | 'check-out', settings: any): boolean => {
+    if (!time) return false;
+    
+    const getThresholdTime = (threshold: string): Date => {
+        const [hours, minutes] = threshold.split(':').map(Number);
+        const thresholdDate = new Date(time);
+        thresholdDate.setHours(hours, minutes, 0, 0);
+        return thresholdDate;
+    };
+
+    if (type === 'check-in') return time >= getThresholdTime(settings.lateThreshold);
+    if (type === 'check-out') return time >= getThresholdTime(settings.lateCheckOutThreshold);
+    return false;
+};
+
 // --- Line Chart Component ---
 const LineChart: React.FC<{ records: AttendanceRecord[] }> = ({ records }) => {
+    const { settings } = useSettings();
     const [tooltip, setTooltip] = useState<{ content: React.ReactNode, pos: { x: number, y: number } } | null>(null);
 
     const lineChartData = useMemo(() => {
-        const data: { [key: string]: { present: number; absent: number; date: Date } } = {};
+        const data: { [key: string]: { present: number; absent: number; late: number; date: Date } } = {};
         const today = new Date();
         for (let i = 6; i >= 0; i--) {
             const date = new Date(today);
             date.setDate(today.getDate() - i);
             const dateString = date.toISOString().split('T')[0];
-            data[dateString] = { present: 0, absent: 0, date: date };
+            data[dateString] = { present: 0, absent: 0, late: 0, date: date };
         }
 
         records.forEach(record => {
@@ -47,23 +66,27 @@ const LineChart: React.FC<{ records: AttendanceRecord[] }> = ({ records }) => {
                 } else if (record.status === AttendanceStatus.ABSENT) {
                     data[dateString].absent += 1;
                 }
+
+                if (isEventLate(record.checkInTime, 'check-in', settings) || isEventLate(record.checkOutTime, 'check-out', settings)) {
+                    data[dateString].late += 1;
+                }
             }
         });
         return Object.values(data);
-    }, [records]);
+    }, [records, settings]);
 
     const PADDING = { top: 10, right: 20, bottom: 25, left: 30 };
     const SVG_WIDTH = 500;
-    const SVG_HEIGHT = 100; // Further reduced height
+    const SVG_HEIGHT = 100;
     const width = SVG_WIDTH - PADDING.left - PADDING.right;
     const height = SVG_HEIGHT - PADDING.top - PADDING.bottom;
 
-    const maxValue = Math.max(...lineChartData.map(d => Math.max(d.present, d.absent)), 5);
+    const maxValue = Math.max(...lineChartData.map(d => Math.max(d.present, d.absent, d.late)), 5);
     
     const xScale = (index: number) => PADDING.left + (index / (lineChartData.length - 1)) * width;
     const yScale = (value: number) => PADDING.top + height - (value / maxValue) * height;
 
-    const generatePath = (dataKey: 'present' | 'absent') => {
+    const generatePath = (dataKey: 'present' | 'absent' | 'late') => {
         return lineChartData.map((d, i) => `${i === 0 ? 'M' : 'L'} ${xScale(i)} ${yScale(d[dataKey])}`).join(' ');
     };
     
@@ -97,12 +120,14 @@ const LineChart: React.FC<{ records: AttendanceRecord[] }> = ({ records }) => {
                 {/* Data Lines */}
                 <path d={generatePath('present')} fill="none" stroke={statusColors[AttendanceStatus.PRESENT]} strokeWidth="2" />
                 <path d={generatePath('absent')} fill="none" stroke={statusColors[AttendanceStatus.ABSENT]} strokeWidth="2" />
+                <path d={generatePath('late')} fill="none" stroke={statusColors['Late']} strokeWidth="2" strokeDasharray="4 2" />
 
                 {/* Data Points & Hover Targets */}
                 {lineChartData.map((d, i) => (
                     <g key={i}>
                         <circle cx={xScale(i)} cy={yScale(d.present)} r="3" fill={statusColors[AttendanceStatus.PRESENT]} stroke="white" strokeWidth="1" />
                         <circle cx={xScale(i)} cy={yScale(d.absent)} r="3" fill={statusColors[AttendanceStatus.ABSENT]} stroke="white" strokeWidth="1" />
+                         <circle cx={xScale(i)} cy={yScale(d.late)} r="3" fill={statusColors['Late']} stroke="white" strokeWidth="1" />
                         <rect 
                            x={xScale(i)-10} y={0} width="20" height={SVG_HEIGHT} fill="transparent"
                            onMouseMove={(e) => handleMouseOver(e, { content: 
@@ -110,6 +135,7 @@ const LineChart: React.FC<{ records: AttendanceRecord[] }> = ({ records }) => {
                                <p className="font-bold">{d.date.toLocaleDateString()}</p>
                                <p style={{color: statusColors[AttendanceStatus.PRESENT]}}>Present: {d.present}</p>
                                <p style={{color: statusColors[AttendanceStatus.ABSENT]}}>Absent: {d.absent}</p>
+                               <p style={{color: statusColors['Late']}}>Late Events: {d.late}</p>
                              </div> 
                            })}
                            onMouseLeave={() => setTooltip(null)}
@@ -152,7 +178,7 @@ const DonutChart: React.FC<{ records: AttendanceRecord[] }> = ({ records }) => {
     }
 
     const radius = 55;
-    const strokeWidth = 15; // Thinner donut
+    const strokeWidth = 15;
     const circumference = 2 * Math.PI * radius;
     let accumulatedPercentage = 0;
 
@@ -205,19 +231,49 @@ const DonutChart: React.FC<{ records: AttendanceRecord[] }> = ({ records }) => {
 
 
 const AttendanceChart: React.FC<AttendanceChartProps> = ({ trendRecords, overviewRecords }) => {
+    const { settings } = useSettings();
+
+    const lateStats = useMemo(() => {
+        let lateCheckIns = 0;
+        let lateCheckOuts = 0;
+
+        overviewRecords.forEach(record => {
+            if (isEventLate(record.checkInTime, 'check-in', settings)) {
+                lateCheckIns++;
+            }
+            if (isEventLate(record.checkOutTime, 'check-out', settings)) {
+                lateCheckOuts++;
+            }
+        });
+
+        return { lateCheckIns, lateCheckOuts };
+    }, [overviewRecords, settings]);
+
+
     return (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             <div className="lg:col-span-3 bg-white rounded-lg shadow-md p-4">
                 <h3 className="text-lg font-semibold text-slate-800 mb-1">Last 7 Days Trend</h3>
                 <LineChart records={trendRecords} />
-                 <div className="flex justify-center space-x-4 -mt-2 text-xs text-slate-600">
+                 <div className="flex justify-center flex-wrap gap-x-4 gap-y-1 -mt-2 text-xs text-slate-600">
                     <div className="flex items-center"><span className="h-2.5 w-2.5 rounded-full mr-1.5" style={{backgroundColor: statusColors[AttendanceStatus.PRESENT]}}></span>Present/Checked Out</div>
                     <div className="flex items-center"><span className="h-2.5 w-2.5 rounded-full mr-1.5" style={{backgroundColor: statusColors[AttendanceStatus.ABSENT]}}></span>Absent</div>
+                    <div className="flex items-center"><span className="h-2.5 w-2.5 rounded-full mr-1.5" style={{backgroundColor: statusColors['Late']}}></span>Late Events</div>
                 </div>
             </div>
             <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-4 flex flex-col justify-center min-h-[120px]">
                 <h3 className="text-lg font-semibold text-slate-800 text-center mb-1">Overview for Selected Range</h3>
                 <DonutChart records={overviewRecords} />
+                <div className="border-t border-slate-200 mt-2 pt-2 flex justify-around text-center">
+                    <div>
+                        <p className="font-bold text-lg text-amber-600">{lateStats.lateCheckIns}</p>
+                        <p className="text-xs text-slate-500">Late Check-ins</p>
+                    </div>
+                     <div>
+                        <p className="font-bold text-lg text-amber-600">{lateStats.lateCheckOuts}</p>
+                        <p className="text-xs text-slate-500">Late Check-outs</p>
+                    </div>
+                </div>
             </div>
         </div>
     );

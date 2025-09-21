@@ -1,5 +1,5 @@
-import React, { useState, FormEvent, useEffect } from 'react';
-import { getStudentById } from '../services/attendanceService';
+import React, { useState } from 'react';
+import { XCircleIcon } from './icons';
 
 interface ManualEntryModalProps {
   isOpen: boolean;
@@ -13,109 +13,101 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ isOpen, onClose, on
   const [action, setAction] = useState<'check-in' | 'check-out'>('check-in');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [studentIdError, setStudentIdError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!isOpen) {
-      // Reset form state when modal is closed/hidden
-      setStudentId('');
-      setGuardianName('');
-      setAction('check-in');
-      setError(null);
-      setStudentIdError(null);
-      setIsSubmitting(false);
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!studentId) {
-      setStudentIdError(null);
-      return;
-    }
-
-    const handler = setTimeout(() => {
-      const studentExists = getStudentById(studentId);
-      if (!studentExists) {
-        setStudentIdError('Student ID not found.');
-      } else {
-        setStudentIdError(null);
-      }
-    }, 300); // Debounce to avoid checking on every keystroke
-
-    return () => clearTimeout(handler);
-  }, [studentId]);
-
-
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!studentId || !guardianName || studentIdError) {
-      setError('Please fill in all fields correctly before submitting.');
-      return;
+    if (!studentId || !guardianName) {
+        setError('Student ID and Guardian Name are required.');
+        return;
     }
-
-    const confirmationMessage = `Are you sure you want to perform '${action}' for student ${studentId.toUpperCase()} with guardian ${guardianName}?`;
-    if (!window.confirm(confirmationMessage)) {
-      return; // Abort if user cancels
-    }
-
-    setError(null);
     setIsSubmitting(true);
+    setError(null);
     try {
-      await onSubmit(studentId, guardianName, action);
-      onClose();
+        await onSubmit(studentId, guardianName, action);
+        handleClose();
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred.');
+        setError(err.message || 'An unexpected error occurred.');
     } finally {
-      setIsSubmitting(false);
+        setIsSubmitting(false);
     }
+  };
+  
+  const handleClose = () => {
+    setStudentId('');
+    setGuardianName('');
+    setAction('check-in');
+    setError(null);
+    setIsSubmitting(false);
+    onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-        <div className="p-6 border-b">
-          <h3 className="text-lg font-semibold text-slate-800">Manual Attendance Entry</h3>
-        </div>
         <form onSubmit={handleSubmit}>
+          <div className="p-6 border-b flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-slate-800">Manual Attendance Entry</h3>
+            <button type="button" onClick={handleClose} className="text-slate-500 hover:text-slate-800">
+                <XCircleIcon className="h-6 w-6"/>
+            </button>
+          </div>
           <div className="p-6 space-y-4">
-            {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg" role="alert">{error}</div>}
+            {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">{error}</div>}
             <div>
-              <label htmlFor="studentId" className="block text-sm font-medium text-slate-700 mb-1">Student ID</label>
-              <input 
-                type="text" 
-                id="studentId" 
-                value={studentId} 
-                onChange={(e) => setStudentId(e.target.value.toUpperCase())} 
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${studentIdError ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 focus:ring-indigo-500'}`} 
-                placeholder="e.g., S001" 
-                aria-invalid={!!studentIdError}
-                aria-describedby="studentId-error"
+              <label htmlFor="studentId" className="block text-sm font-medium text-slate-700">Student ID</label>
+              <input
+                type="text"
+                id="studentId"
+                value={studentId}
+                onChange={(e) => setStudentId(e.target.value.toUpperCase())}
+                placeholder="e.g., S001"
+                className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                required
               />
-              {studentIdError && <p id="studentId-error" className="mt-1 text-xs text-red-600">{studentIdError}</p>}
             </div>
             <div>
-              <label htmlFor="guardianName" className="block text-sm font-medium text-slate-700 mb-1">Parent/Guardian Name</label>
-              <input type="text" id="guardianName" value={guardianName} onChange={(e) => setGuardianName(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g., Mr. Johnson" />
+              <label htmlFor="guardianName" className="block text-sm font-medium text-slate-700">Guardian Full Name</label>
+              <input
+                type="text"
+                id="guardianName"
+                value={guardianName}
+                onChange={(e) => setGuardianName(e.target.value)}
+                placeholder="e.g., Jane Doe"
+                className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                required
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Action</label>
-              <div className="flex space-x-4">
-                <label className="flex items-center">
-                  <input type="radio" name="action" value="check-in" checked={action === 'check-in'} onChange={() => setAction('check-in')} className="form-radio text-indigo-600 focus:ring-indigo-500" />
-                  <span className="ml-2">Check-in</span>
-                </label>
-                <label className="flex items-center">
-                  <input type="radio" name="action" value="check-out" checked={action === 'check-out'} onChange={() => setAction('check-out')} className="form-radio text-indigo-600 focus:ring-indigo-500" />
-                  <span className="ml-2">Check-out</span>
-                </label>
+              <label className="block text-sm font-medium text-slate-700">Action</label>
+              <div className="mt-2 flex rounded-md shadow-sm">
+                <button
+                  type="button"
+                  onClick={() => setAction('check-in')}
+                  className={`relative inline-flex items-center justify-center w-1/2 px-4 py-2 rounded-l-md border text-sm font-medium focus:z-10 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 ${
+                    action === 'check-in' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  Check-in
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAction('check-out')}
+                  className={`relative -ml-px inline-flex items-center justify-center w-1/2 px-4 py-2 rounded-r-md border text-sm font-medium focus:z-10 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 ${
+                    action === 'check-out' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  Check-out
+                </button>
               </div>
             </div>
           </div>
           <div className="p-4 bg-slate-50 flex justify-end space-x-2 rounded-b-lg">
-            <button type="button" onClick={onClose} disabled={isSubmitting} className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-100 disabled:opacity-50">Cancel</button>
-            <button type="submit" disabled={isSubmitting || !!studentIdError || !studentId || !guardianName} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed">
+            <button type="button" onClick={handleClose} className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-100 disabled:opacity-50" disabled={isSubmitting}>
+              Cancel
+            </button>
+            <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50" disabled={isSubmitting}>
               {isSubmitting ? 'Submitting...' : 'Submit Entry'}
             </button>
           </div>

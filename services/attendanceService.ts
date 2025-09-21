@@ -3,29 +3,29 @@ import { AttendanceRecord, Student, Guardian, AttendanceStatus } from '../types'
 // --- MOCK DATA ---
 
 const mockGuardians: Guardian[] = [
-  { id: 'g01', name: 'Maria Garcia', phone: '555-0101' },
-  { id: 'g02', name: 'David Smith', phone: '555-0102' },
-  { id: 'g03', name: 'Emily White', phone: '555-0103' },
-  { id: 'g04', name: 'Daniel Brown', phone: '555-0104' },
-  { id: 'g05', name: 'Olivia Martinez', phone: '555-0105' },
-  { id: 'g06', name: 'James Wilson', phone: '555-0106' },
-  { id: 'g07', name: 'Sophia Lee', phone: '555-0107' },
-  { id: 'g08', name: 'Liam Jones', phone: '555-0108' },
-  { id: 'g09', name: 'Ava Rodriguez', phone: '555-0109' },
-  { id: 'g10', name: 'Noah Taylor', phone: '555-0110' },
-  { id: 'g11', name: 'Isabella Johnson', phone: '555-0111' },
-  { id: 'g12', name: 'William Davis', phone: '555-0112' },
+  { id: 'g01', name: 'Ama Osei', phone: '555-0101' },
+  { id: 'g02', name: 'Kofi Mensah', phone: '555-0102' },
+  { id: 'g03', name: 'Yaa Addo', phone: '555-0103' },
+  { id: 'g04', name: 'Kwabena Boateng', phone: '555-0104' },
+  { id: 'g05', name: 'Akua Asante', phone: '555-0105' },
+  { id: 'g06', name: 'Yaw Nkrumah', phone: '555-0106' },
+  { id: 'g07', name: 'Adwoa Acheampong', phone: '555-0107' },
+  { id: 'g08', name: 'Kwaku Owusu', phone: '555-0108' },
+  { id: 'g09', name: 'Afia Annan', phone: '555-0109' },
+  { id: 'g10', name: 'Kojo Agyemang', phone: '555-0110' },
+  { id: 'g11', name: 'Amma Boateng', phone: '555-0111' },
+  { id: 'g12', name: 'Kwadwo Mensah', phone: '555-0112' },
 ];
 
 let mockStudents: Student[] = [
-  { id: 'S001', name: 'Liam Garcia', grade: 3, authorizedGuardians: [mockGuardians[0], mockGuardians[1]], photoUrl: `https://i.pravatar.cc/150?u=S001` },
-  { id: 'S002', name: 'Olivia Smith', grade: 3, authorizedGuardians: [mockGuardians[1]], photoUrl: `https://i.pravatar.cc/150?u=S002` },
-  { id: 'S003', name: 'Noah White', grade: 3, authorizedGuardians: [mockGuardians[2], mockGuardians[3]], photoUrl: `https://i.pravatar.cc/150?u=S003` },
-  { id: 'S004', name: 'Emma Brown', grade: 5, authorizedGuardians: [mockGuardians[3]], photoUrl: `https://i.pravatar.cc/150?u=S004` },
-  { id: 'S005', name: 'Oliver Martinez', grade: 5, authorizedGuardians: [mockGuardians[4]], notes: "Allergy to peanuts." },
-  { id: 'S006', name: 'Ava Wilson', grade: 5, authorizedGuardians: [mockGuardians[5], mockGuardians[0]], photoUrl: `https://i.pravatar.cc/150?u=S006` },
-  { id: 'S007', name: 'Elijah Lee', grade: 3, authorizedGuardians: [mockGuardians[6]], photoUrl: `https://i.pravatar.cc/150?u=S007` },
-  { id: 'S008', name: 'Charlotte Jones', grade: 5, authorizedGuardians: [mockGuardians[7]], photoUrl: `https://i.pravatar.cc/150?u=S008` },
+  { id: 'S001', name: 'Kwaku Osei', grade: 3, authorizedGuardians: [mockGuardians[0], mockGuardians[1]], photoUrl: `https://i.pravatar.cc/150?u=S001` },
+  { id: 'S002', name: 'Abena Mensah', grade: 3, authorizedGuardians: [mockGuardians[1]], photoUrl: `https://i.pravatar.cc/150?u=S002` },
+  { id: 'S003', name: 'Yaw Addo Jr.', grade: 3, authorizedGuardians: [mockGuardians[2], mockGuardians[3]], photoUrl: `https://i.pravatar.cc/150?u=S003` },
+  { id: 'S004', name: 'Akosua Boateng', grade: 5, authorizedGuardians: [mockGuardians[3]], photoUrl: `https://i.pravatar.cc/150?u=S004` },
+  { id: 'S005', name: 'Kofi Asante', grade: 5, authorizedGuardians: [mockGuardians[4]], notes: "Allergy to peanuts." },
+  { id: 'S006', name: 'Afia Nkrumah', grade: 5, authorizedGuardians: [mockGuardians[5], mockGuardians[0]], photoUrl: `https://i.pravatar.cc/150?u=S006` },
+  { id: 'S007', name: 'Kwadwo Acheampong', grade: 3, authorizedGuardians: [mockGuardians[6]], photoUrl: `https://i.pravatar.cc/150?u=S007` },
+  { id: 'S008', name: 'Amma Owusu', grade: 5, authorizedGuardians: [mockGuardians[7]], photoUrl: `https://i.pravatar.cc/150?u=S008` },
 ];
 
 let mockAttendanceRecords: AttendanceRecord[] = [];
