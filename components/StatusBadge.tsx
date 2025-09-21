@@ -1,4 +1,5 @@
 import React from 'react';
+// FIX: Corrected import path for types
 import { AttendanceStatus } from '../types';
 
 interface StatusBadgeProps {

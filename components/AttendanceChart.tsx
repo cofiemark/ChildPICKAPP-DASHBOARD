@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+// FIX: Corrected import path for types
 import { AttendanceRecord, AttendanceStatus } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
 

@@ -1,144 +1,162 @@
 import React, { useState, useEffect } from 'react';
-import { User, AppView, AttendanceRecord } from './types';
-import { getUserFromToken, logout, getUsers, addUser, updateUser, deleteUser } from './services/authService';
-import { getAttendanceRecords } from './services/attendanceService';
-import { SettingsProvider } from './contexts/SettingsContext';
-import { ToastProvider, useToast } from './contexts/ToastContext';
-import ToastContainer from './components/ToastContainer';
+import { User, AttendanceRecord, Student, AuditLog } from './types';
+import { getAttendanceRecords, manualCheckInCheckOut, getStudents, saveStudent as apiSaveStudent, deleteStudent as apiDeleteStudent, getUsers, saveUser as apiSaveUser, deleteUser as apiDeleteUser } from './services/attendanceService';
+import { getAuditLogs } from './services/auditLogService';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import StudentsPage from './components/StudentsPage';
 import ReportsPage from './components/ReportsPage';
-import SettingsModal from './components/SettingsModal';
-import LoginPage from './components/LoginPage';
 import UserManagementPage from './components/UserManagementPage';
+import AuditLogPage from './components/AuditLogPage';
+import LoginPage from './components/LoginPage';
+import StudentProfile from './components/StudentProfile';
+import ToastContainer from './components/ToastContainer';
+import { useToast } from './contexts/ToastContext';
 
-const AppContent: React.FC = () => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+export type Page = 'Dashboard' | 'Students' | 'Reports' | 'Users' | 'Audit Log' | 'StudentProfile';
+
+const App: React.FC = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [currentPage, setCurrentPage] = useState<Page>('Dashboard');
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+
+  const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentView, setCurrentView] = useState<AppView>('dashboard');
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  const [allRecords, setAllRecords] = useState<AttendanceRecord[]>([]);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
   const { addToast } = useToast();
 
-  const fetchData = async () => {
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        // In a real app, you'd validate the token with a backend
+        const storedUser = localStorage.getItem('currentUser');
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
+      }
+    };
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [user]);
+
+  const loadData = async () => {
+    setIsLoading(true);
     try {
-      const [records, users] = await Promise.all([getAttendanceRecords(), getUsers()]);
-      setAllRecords(records);
-      setAllUsers(users);
+      const today = new Date();
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(today.getDate() - 30);
+
+      const [recordsData, studentsData, usersData, auditLogsData] = await Promise.all([
+        getAttendanceRecords(thirtyDaysAgo, today),
+        getStudents(),
+        getUsers(),
+        getAuditLogs(),
+      ]);
+      setRecords(recordsData);
+      setStudents(studentsData);
+      setUsers(usersData);
+      setAuditLogs(auditLogsData);
     } catch (error) {
-      console.error("Failed to fetch initial data", error);
-      addToast('Could not load app data. Please refresh.', 'error');
+      console.error("Failed to load data", error);
+      addToast('Failed to load initial data.', 'error');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      const user = getUserFromToken(token);
-      if (user) {
-        setCurrentUser(user);
-      }
-    }
-    setIsLoading(false);
-  }, []);
-  
-  useEffect(() => {
-    if (currentUser) {
-      fetchData();
-    }
-  }, [currentUser]);
-
-  const handleLoginSuccess = (user: User) => {
-    setCurrentUser(user);
-    setCurrentView('dashboard');
+  const handleLoginSuccess = (loggedInUser: User) => {
+    setUser(loggedInUser);
+    localStorage.setItem('currentUser', JSON.stringify(loggedInUser));
   };
 
   const handleLogout = () => {
-    logout();
-    setCurrentUser(null);
-    setAllRecords([]);
-    setAllUsers([]);
+    setUser(null);
+    setCurrentPage('Dashboard');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
+  };
+
+  const handleManualEntry = async (studentId: string, guardianName: string, action: 'check-in' | 'check-out'): Promise<void> => {
+    await manualCheckInCheckOut(studentId, guardianName, action);
+    addToast(`Successfully recorded ${action} for student ${studentId}.`, 'success');
+    await loadData(); // Refresh data
+  };
+
+  const handleSaveStudent = async (studentData: Omit<Student, 'id'> | Student) => {
+    await apiSaveStudent(studentData);
+    await loadData();
   };
   
-  const handleNavigate = (view: AppView) => {
-      if (view === 'settings') {
-          setIsSettingsOpen(true);
-      } else {
-          setCurrentView(view);
-      }
-  }
+  const handleDeleteStudent = async (studentId: string) => {
+    await apiDeleteStudent(studentId);
+    await loadData();
+  };
   
   const handleSaveUser = async (userData: Omit<User, 'id'> | User) => {
-    if ('id' in userData) {
-        await updateUser(userData.id, userData);
-    } else {
-        await addUser(userData);
-    }
-    await fetchData(); // Refresh users list
+    await apiSaveUser(userData);
+    await loadData();
   };
-  
+
   const handleDeleteUser = async (userId: string) => {
-      await deleteUser(userId);
-      await fetchData(); // Refresh users list
+    await apiDeleteUser(userId);
+    await loadData();
   };
 
-  const renderCurrentView = () => {
-    switch (currentView) {
-      case 'dashboard':
-        return <Dashboard currentUser={currentUser!} allRecords={allRecords} setAllRecords={setAllRecords} />;
-      case 'students':
-        return <StudentsPage currentUser={currentUser!} />;
-      case 'reports':
-        return <ReportsPage currentUser={currentUser!} allRecords={allRecords} />;
-      case 'user_management':
-        return <UserManagementPage allUsers={allUsers} onSaveUser={handleSaveUser} onDeleteUser={handleDeleteUser} />;
+  const handleRowClick = (studentId: string) => {
+    setSelectedStudentId(studentId);
+    setCurrentPage('StudentProfile');
+  };
+  
+  const handleBackToDashboard = () => {
+    setSelectedStudentId(null);
+    setCurrentPage('Dashboard');
+  };
+
+  if (!user) {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'Dashboard':
+        return <Dashboard records={records} onRowClick={handleRowClick} onManualEntry={handleManualEntry} />;
+      case 'Students':
+        return <StudentsPage allStudents={students} onSaveStudent={handleSaveStudent} onDeleteStudent={handleDeleteStudent} />;
+      case 'StudentProfile':
+        return <StudentProfile studentId={selectedStudentId} records={records} onBack={handleBackToDashboard} />;
+      case 'Reports':
+        return <ReportsPage currentUser={user} allRecords={records} />;
+      case 'Users':
+        return <UserManagementPage allUsers={users} onSaveUser={handleSaveUser} onDeleteUser={handleDeleteUser} />;
+      case 'Audit Log':
+        return <AuditLogPage auditLogs={auditLogs} />;
       default:
-        return <Dashboard currentUser={currentUser!} allRecords={allRecords} setAllRecords={setAllRecords} />;
+        return <Dashboard records={records} onRowClick={handleRowClick} onManualEntry={handleManualEntry} />;
     }
   };
 
-  if (isLoading) {
-    return <div className="h-screen flex items-center justify-center">Loading...</div>;
-  }
-  
   return (
-    <div className="bg-slate-50 min-h-screen">
-      {!currentUser ? (
-        <LoginPage onLoginSuccess={handleLoginSuccess} />
-      ) : (
-        <div className="flex">
-          <Sidebar 
-            user={currentUser} 
-            currentView={currentView} 
-            onNavigate={handleNavigate} 
-            onLogout={handleLogout} 
-          />
-          <div className="flex-1 flex flex-col">
-            <Header />
-            <div className="flex-grow">
-              {renderCurrentView()}
-            </div>
-          </div>
+    <div className="flex h-screen bg-slate-100">
+      <Sidebar user={user} currentPage={currentPage} setCurrentPage={setCurrentPage} onLogout={handleLogout} />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Header />
+        <div className="flex-1 overflow-x-hidden overflow-y-auto">
+          {isLoading ? <div className="p-8 text-center">Loading data...</div> : renderPage()}
         </div>
-      )}
-      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      </div>
+      <ToastContainer />
     </div>
   );
 };
-
-const App: React.FC = () => {
-    return (
-        <SettingsProvider>
-            <ToastProvider>
-                <AppContent />
-                <ToastContainer />
-            </ToastProvider>
-        </SettingsProvider>
-    )
-}
 
 export default App;

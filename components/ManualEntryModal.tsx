@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { XCircleIcon } from './icons';
+import { useToast } from '../contexts/ToastContext';
 
 interface ManualEntryModalProps {
   isOpen: boolean;
@@ -12,21 +13,20 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ isOpen, onClose, on
   const [guardianName, setGuardianName] = useState('');
   const [action, setAction] = useState<'check-in' | 'check-out'>('check-in');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { addToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!studentId || !guardianName) {
-        setError('Student ID and Guardian Name are required.');
+        addToast('Student ID and Guardian Name are required.', 'error');
         return;
     }
     setIsSubmitting(true);
-    setError(null);
     try {
         await onSubmit(studentId, guardianName, action);
         handleClose();
     } catch (err: any) {
-        setError(err.message || 'An unexpected error occurred.');
+        addToast(err.message || 'An unexpected error occurred.', 'error');
     } finally {
         setIsSubmitting(false);
     }
@@ -36,7 +36,6 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ isOpen, onClose, on
     setStudentId('');
     setGuardianName('');
     setAction('check-in');
-    setError(null);
     setIsSubmitting(false);
     onClose();
   };
@@ -54,15 +53,14 @@ const ManualEntryModal: React.FC<ManualEntryModalProps> = ({ isOpen, onClose, on
             </button>
           </div>
           <div className="p-6 space-y-4">
-            {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">{error}</div>}
             <div>
               <label htmlFor="studentId" className="block text-sm font-medium text-slate-700">Student ID</label>
               <input
                 type="text"
                 id="studentId"
                 value={studentId}
-                onChange={(e) => setStudentId(e.target.value.toUpperCase())}
-                placeholder="e.g., S001"
+                onChange={(e) => setStudentId(e.target.value)}
+                placeholder="e.g., 1000000001"
                 className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 required
               />

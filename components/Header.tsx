@@ -27,7 +27,7 @@ const Header: React.FC = () => {
     <header className="bg-white shadow-sm p-4 sticky top-0 z-20">
       <div className="w-full flex flex-wrap justify-between items-center gap-4">
         <h1 className="text-2xl font-bold text-slate-800 shrink-0">
-          Student Attendance
+          SAIS Child Security & Attendance System
         </h1>
         
         <div className="text-right">

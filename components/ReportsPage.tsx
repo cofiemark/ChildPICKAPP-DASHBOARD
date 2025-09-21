@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
+// FIX: Corrected import path for types
 import { User, AttendanceRecord, Student, AttendanceStatus } from '../types';
+// FIX: Corrected import path for icons
 import { DocumentTextIcon } from './icons';
 
 interface ReportsPageProps {

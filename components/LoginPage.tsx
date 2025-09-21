@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { login, loginWithSSO } from '../services/authService';
 import { User } from '../types';
-import { SchoolLogoIcon } from './icons';
+import { useToast } from '../contexts/ToastContext';
 
 interface LoginPageProps {
   onLoginSuccess: (user: User) => void;
@@ -10,19 +10,18 @@ interface LoginPageProps {
 const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('osei.kofi@school.edu');
   const [password, setPassword] = useState('password123');
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { addToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
     try {
       const { user, token } = await login(email, password);
       localStorage.setItem('authToken', token);
       onLoginSuccess(user);
     } catch (err: any) {
-      setError(err.message || 'An error occurred.');
+      addToast(err.message || 'An error occurred.', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -30,13 +29,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
   const handleSSOLogin = async (provider: 'google' | 'microsoft') => {
       setIsLoading(true);
-      setError('');
       try {
           const { user, token } = await loginWithSSO(provider);
           localStorage.setItem('authToken', token);
           onLoginSuccess(user);
       } catch (err: any) {
-          setError(err.message || 'An error occurred during SSO login.');
+          addToast(err.message || 'An error occurred during SSO login.', 'error');
       } finally {
           setIsLoading(false);
       }
@@ -46,13 +44,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-4">
       <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-lg">
         <div className="flex justify-center mb-6">
-          <SchoolLogoIcon className="w-12 h-12 text-indigo-600" />
+          <img src="https://placehold.co/100x100/6366f1/ffffff?text=Logo" alt="ChildPICK APP Logo" className="w-12 h-12 object-contain" />
         </div>
-        <h2 className="text-2xl font-bold text-center text-slate-800">Welcome to ChildPICK APP</h2>
+        <h2 className="text-2xl font-bold text-center text-slate-800">Welcome to ChildPICK® APP</h2>
         <p className="text-center text-slate-500 mb-8">Sign in to your account</p>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          {error && <p className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-md">{error}</p>}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-slate-700">
               Email address

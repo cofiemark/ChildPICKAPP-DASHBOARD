@@ -1,108 +1,90 @@
-import React from 'react';
-import { User, AppView, Role } from '../types';
-import { 
-    HomeIcon, 
-    UsersGroupIcon, 
-    ChartBarIcon, 
-    Cog6ToothIcon, 
-    LogoutIcon,
-    UserCircleIcon,
-    SchoolLogoIcon,
-    UsersIcon
-} from './icons';
+import React, { useState } from 'react';
+import { User, Role } from '../types';
+import { Page } from '../App';
+import { Cog6ToothIcon, ArrowLeftOnRectangleIcon, ChartBarIcon, UsersIcon, ShieldCheckIcon, DocumentMagnifyingGlassIcon, IdentificationIcon, XCircleIcon } from './icons';
+import SettingsModal from './SettingsModal';
 
 interface SidebarProps {
   user: User;
-  currentView: AppView;
-  onNavigate: (view: AppView) => void;
+  currentPage: Page;
+  setCurrentPage: (page: Page) => void;
   onLogout: () => void;
 }
 
-const NavItem: React.FC<{
+const NavLink: React.FC<{
   icon: React.ReactNode;
   label: string;
   isActive: boolean;
   onClick: () => void;
 }> = ({ icon, label, isActive, onClick }) => (
-  <li>
-    <a
-      href="#"
-      onClick={(e) => {
-        e.preventDefault();
-        onClick();
-      }}
-      className={`flex items-center p-2 rounded-lg transition-colors duration-200 ${
-        isActive
-          ? 'bg-indigo-100 text-indigo-700 font-semibold'
-          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-      }`}
-    >
-      {icon}
-      <span className="ml-3">{label}</span>
-    </a>
-  </li>
+  <button
+    onClick={onClick}
+    className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium ${
+      isActive
+        ? 'bg-slate-900 text-white'
+        : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+    }`}
+  >
+    {icon}
+    <span>{label}</span>
+  </button>
 );
 
-const Sidebar: React.FC<SidebarProps> = ({ user, currentView, onNavigate, onLogout }) => {
+const Sidebar: React.FC<SidebarProps> = ({ user, currentPage, setCurrentPage, onLogout }) => {
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+    
+    const navItems = [
+        { label: 'Dashboard', icon: <ChartBarIcon className="w-5 h-5" />, page: 'Dashboard', roles: [Role.ADMIN, Role.TEACHER, Role.STAFF] },
+        { label: 'Students', icon: <IdentificationIcon className="w-5 h-5" />, page: 'Students', roles: [Role.ADMIN, Role.TEACHER] },
+        { label: 'User Management', icon: <UsersIcon className="w-5 h-5" />, page: 'Users', roles: [Role.ADMIN] },
+        { label: 'Reports', icon: <DocumentMagnifyingGlassIcon className="w-5 h-5" />, page: 'Reports', roles: [Role.ADMIN, Role.TEACHER] },
+        { label: 'Audit Log', icon: <ShieldCheckIcon className="w-5 h-5" />, page: 'Audit Log', roles: [Role.ADMIN] },
+    ];
+    
+    const accessibleNavItems = navItems.filter(item => item.roles.includes(user.role));
+
   return (
-    <aside className="w-64 bg-white border-r border-slate-200 flex flex-col h-screen sticky top-0">
-      <div className="flex items-center justify-center h-16 border-b border-slate-200 px-4">
-        <SchoolLogoIcon className="w-8 h-8 text-indigo-600" />
-        <h1 className="text-xl font-bold text-indigo-600 ml-2">ChildPICK APP</h1>
+    <>
+    <aside className="w-64 bg-slate-800 text-white flex flex-col flex-shrink-0">
+      <div className="h-16 flex items-center justify-center px-4 border-b border-slate-900">
+        <img src="https://placehold.co/100x100/ffffff/1e293b?text=Logo" alt="ChildPICK APP Logo" className="w-8 h-8 object-contain mr-2" />
+        <span className="text-xl font-semibold">ChildPICK APP®</span>
       </div>
-      <div className="flex-grow p-4">
-        <ul className="space-y-2">
-          <NavItem 
-            icon={<HomeIcon className="w-6 h-6" />} 
-            label="Dashboard" 
-            isActive={currentView === 'dashboard'} 
-            onClick={() => onNavigate('dashboard')} 
-          />
-          <NavItem 
-            icon={<UsersGroupIcon className="w-6 h-6" />} 
-            label="Students" 
-            isActive={currentView === 'students'} 
-            onClick={() => onNavigate('students')} 
-          />
-          <NavItem 
-            icon={<ChartBarIcon className="w-6 h-6" />} 
-            label="Reports" 
-            isActive={currentView === 'reports'} 
-            onClick={() => onNavigate('reports')} 
-          />
-          {user.role === Role.SUPER_ADMIN && (
-             <NavItem 
-                icon={<UsersIcon className="w-6 h-6" />} 
-                label="User Management" 
-                isActive={currentView === 'user_management'} 
-                onClick={() => onNavigate('user_management')} 
+      <nav className="flex-1 px-4 py-4 space-y-2">
+       {accessibleNavItems.map(item => (
+            <NavLink
+                key={item.label}
+                icon={item.icon}
+                label={item.label}
+                isActive={currentPage === item.page}
+                onClick={() => setCurrentPage(item.page as Page)}
             />
-          )}
-           <NavItem 
-            icon={<Cog6ToothIcon className="w-6 h-6" />} 
-            label="Settings" 
-            isActive={currentView === 'settings'} 
-            onClick={() => onNavigate('settings')} 
-          />
-        </ul>
-      </div>
-      <div className="p-4 border-t border-slate-200">
-        <div className="flex items-center mb-4">
-          <UserCircleIcon className="w-10 h-10 text-slate-400" />
-          <div className="ml-3">
-            <p className="font-semibold text-slate-800">{user.name}</p>
-            <p className="text-sm text-slate-500">{user.role}</p>
-          </div>
+       ))}
+      </nav>
+      <div className="px-4 py-4 border-t border-slate-900 space-y-2">
+        <div className="flex items-center space-x-3 p-2">
+            <img src={user.avatarUrl || `https://i.pravatar.cc/150?u=${user.id}`} alt={user.name} className="h-10 w-10 rounded-full" />
+            <div>
+                <p className="font-semibold text-sm">{user.name}</p>
+                <p className="text-xs text-slate-400">{user.role}{user.role === Role.TEACHER && ` (Grade ${user.grade})`}</p>
+            </div>
         </div>
-        <button
+        <NavLink
+            icon={<Cog6ToothIcon className="w-5 h-5" />}
+            label="Settings"
+            isActive={isSettingsModalOpen}
+            onClick={() => setIsSettingsModalOpen(true)}
+        />
+        <NavLink
+          icon={<ArrowLeftOnRectangleIcon className="w-5 h-5" />}
+          label="Logout"
+          isActive={false}
           onClick={onLogout}
-          className="w-full flex items-center justify-center p-2 rounded-lg text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors duration-200"
-        >
-          <LogoutIcon className="w-6 h-6" />
-          <span className="ml-3 font-semibold">Logout</span>
-        </button>
+        />
       </div>
     </aside>
+    <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
+    </>
   );
 };
 

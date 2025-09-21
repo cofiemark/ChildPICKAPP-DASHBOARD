@@ -1,49 +1,29 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Student, User, Role } from '../types';
-import { getStudents, addStudent, updateStudent } from '../services/attendanceService';
+import React, { useState, useMemo } from 'react';
+import { Student } from '../types';
+import { useToast } from '../contexts/ToastContext';
 import StudentFormModal from './StudentFormModal';
-import { PlusIcon, PencilIcon, SearchIcon, UserCircleIcon } from './icons';
+import { UserPlusIcon, PencilIcon, TrashIcon, SearchIcon, UserCircleIcon } from './icons';
 
 interface StudentsPageProps {
-  currentUser: User;
+  allStudents: Student[];
+  onSaveStudent: (studentData: Omit<Student, 'id'> | Student) => Promise<void>;
+  onDeleteStudent: (studentId: string) => Promise<void>;
 }
 
-const StudentsPage: React.FC<StudentsPageProps> = ({ currentUser }) => {
-  const [students, setStudents] = useState<Student[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+const StudentsPage: React.FC<StudentsPageProps> = ({ allStudents, onSaveStudent, onDeleteStudent }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
-  
-  const canPerformActions = currentUser.role === Role.SUPER_ADMIN || currentUser.role === Role.ADMIN_STAFF;
-
-  const fetchStudents = async () => {
-    setIsLoading(true);
-    try {
-      let allStudents = await getStudents();
-      if (currentUser.role === Role.TEACHER) {
-        allStudents = allStudents.filter(s => s.grade === currentUser.grade);
-      }
-      setStudents(allStudents);
-    } catch (error) {
-      console.error("Failed to fetch students:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchStudents();
-  }, [currentUser]);
+  const { addToast } = useToast();
 
   const filteredStudents = useMemo(() => {
     const lowercasedFilter = searchTerm.toLowerCase();
-    return students.filter(student =>
+    return allStudents.filter(student =>
       student.name.toLowerCase().includes(lowercasedFilter) ||
       student.id.toLowerCase().includes(lowercasedFilter) ||
       String(student.grade).includes(lowercasedFilter)
-    );
-  }, [students, searchTerm]);
+    ).sort((a,b) => a.name.localeCompare(b.name));
+  }, [allStudents, searchTerm]);
 
   const handleOpenModal = (student: Student | null = null) => {
     setEditingStudent(student);
@@ -54,18 +34,15 @@ const StudentsPage: React.FC<StudentsPageProps> = ({ currentUser }) => {
     setIsModalOpen(false);
     setEditingStudent(null);
   };
-
-  const handleSubmitForm = async (studentData: Omit<Student, 'id'> | Student) => {
-    try {
-      if ('id' in studentData) {
-        await updateStudent(studentData.id, studentData);
-      } else {
-        await addStudent(studentData);
-      }
-      await fetchStudents(); // Refresh list
-    } catch (error) {
-      console.error("Failed to save student:", error);
-      alert("Error saving student. Please try again.");
+  
+  const handleDelete = async (student: Student) => {
+    if (window.confirm(`Are you sure you want to delete "${student.name}"? This action cannot be undone.`)) {
+        try {
+            await onDeleteStudent(student.id);
+            addToast('Student deleted successfully.', 'success');
+        } catch (err: any) {
+            addToast(err.message || 'Failed to delete student.', 'error');
+        }
     }
   };
 
@@ -74,15 +51,13 @@ const StudentsPage: React.FC<StudentsPageProps> = ({ currentUser }) => {
       <main className="max-w-7xl mx-auto p-4 md:p-6 lg:p-8 space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-slate-800">Student Management</h2>
+            <h2 className="text-3xl font-bold text-slate-800">Student Roster</h2>
             <p className="text-slate-500 mt-1">View, add, or edit student information.</p>
           </div>
-          {canPerformActions && (
-            <button onClick={() => handleOpenModal()} className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition-colors">
-              <PlusIcon className="w-5 h-5" />
-              <span>Add New Student</span>
-            </button>
-          )}
+          <button onClick={() => handleOpenModal()} className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition-colors">
+            <UserPlusIcon className="w-5 h-5" />
+            <span>Add New Student</span>
+          </button>
         </div>
 
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -104,39 +79,40 @@ const StudentsPage: React.FC<StudentsPageProps> = ({ currentUser }) => {
             <table className="w-full text-sm text-left text-slate-500">
               <thead className="text-xs text-slate-700 uppercase bg-slate-100">
                 <tr>
-                  <th scope="col" className="px-6 py-3">Student Name</th>
+                  <th scope="col" className="px-6 py-3">Name</th>
                   <th scope="col" className="px-6 py-3">Student ID</th>
                   <th scope="col" className="px-6 py-3">Grade</th>
                   <th scope="col" className="px-6 py-3">Authorized Guardians</th>
-                  {canPerformActions && <th scope="col" className="px-6 py-3"><span className="sr-only">Edit</span></th>}
+                  <th scope="col" className="px-6 py-3"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
               <tbody>
-                {isLoading ? (
-                  <tr><td colSpan={5} className="text-center py-8">Loading students...</td></tr>
-                ) : filteredStudents.length > 0 ? (
+                {filteredStudents.length > 0 ? (
                   filteredStudents.map(student => (
                     <tr key={student.id} className="bg-white border-b hover:bg-slate-50">
                       <th scope="row" className="px-6 py-4 font-medium text-slate-900 whitespace-nowrap">
                         <div className="flex items-center space-x-3">
-                          {student.photoUrl ? (
-                            <img src={student.photoUrl} alt={student.name} className="h-10 w-10 rounded-full object-cover"/>
-                          ) : (
-                            <UserCircleIcon className="h-10 w-10 text-slate-300"/>
-                          )}
-                          <span>{student.name}</span>
+                            {student.photoUrl ? (
+                                <img src={student.photoUrl} alt={student.name} className="h-10 w-10 rounded-full object-cover" />
+                            ) : (
+                                <div className="h-10 w-10 rounded-full bg-slate-200 flex items-center justify-center">
+                                    <UserCircleIcon className="w-8 h-8 text-slate-400" />
+                                </div>
+                            )}
+                            <span>{student.name}</span>
                         </div>
                       </th>
                       <td className="px-6 py-4">{student.id}</td>
                       <td className="px-6 py-4">{student.grade}</td>
                       <td className="px-6 py-4">{student.authorizedGuardians.map(g => g.name).join(', ')}</td>
-                      {canPerformActions && (
-                        <td className="px-6 py-4 text-right">
-                          <button onClick={() => handleOpenModal(student)} className="font-medium text-indigo-600 hover:text-indigo-800 p-2 rounded-md hover:bg-indigo-50">
-                            <PencilIcon className="w-5 h-5"/>
-                          </button>
-                        </td>
-                      )}
+                      <td className="px-6 py-4 text-right space-x-2">
+                        <button onClick={() => handleOpenModal(student)} className="p-2 text-indigo-600 hover:text-indigo-800 rounded-md hover:bg-indigo-50">
+                          <PencilIcon className="w-5 h-5"/>
+                        </button>
+                        <button onClick={() => handleDelete(student)} className="p-2 text-red-600 hover:text-red-800 rounded-md hover:bg-red-50">
+                          <TrashIcon className="w-5 h-5"/>
+                        </button>
+                      </td>
                     </tr>
                   ))
                 ) : (
@@ -151,7 +127,7 @@ const StudentsPage: React.FC<StudentsPageProps> = ({ currentUser }) => {
         <StudentFormModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
-          onSubmit={handleSubmitForm}
+          onSubmit={onSaveStudent}
           student={editingStudent}
         />
       )}

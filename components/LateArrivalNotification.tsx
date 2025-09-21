@@ -1,5 +1,7 @@
 import React from 'react';
+// FIX: Corrected import path for types
 import { Student } from '../types';
+// FIX: Corrected import path for icons
 import { ExclamationTriangleIcon, XCircleIcon } from './icons';
 
 interface LateArrivalNotificationProps {

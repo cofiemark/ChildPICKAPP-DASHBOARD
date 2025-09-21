@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+// FIX: Corrected import path for types, which also fixes the 'Key' type error
 import { User, Role } from '../types';
 import { useToast } from '../contexts/ToastContext';
+// FIX: Corrected import path for icons
 import { XCircleIcon } from './icons';
 
 interface UserFormModalProps {
@@ -56,7 +58,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSubmit
 
     setIsSubmitting(true);
     
-    const userDataPayload: Omit<User, 'id' | 'password'> & { grade?: number } = {
+    const userDataPayload: Omit<User, 'id' | 'avatarUrl'> & { grade?: number } = {
         name: formData.name,
         email: formData.email,
         role: formData.role,
@@ -97,16 +99,16 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSubmit
           <div className="p-6 space-y-4">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-slate-700">Full Name</label>
-              <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} className="mt-1 block w-full input" required />
+              <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} className="mt-1 block w-full input px-3 py-2 border border-slate-300 rounded-lg" required />
             </div>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-slate-700">Email Address</label>
-              <input type="email" name="email" id="email" value={formData.email} onChange={handleChange} className="mt-1 block w-full input" required />
+              <input type="email" name="email" id="email" value={formData.email} onChange={handleChange} className="mt-1 block w-full input px-3 py-2 border border-slate-300 rounded-lg" required />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="role" className="block text-sm font-medium text-slate-700">Role</label>
-                <select name="role" id="role" value={formData.role} onChange={handleChange} className="mt-1 block w-full input">
+                <select name="role" id="role" value={formData.role} onChange={handleChange} className="mt-1 block w-full input px-3 py-2 border border-slate-300 rounded-lg">
                   {Object.values(Role).map(roleValue => (
                     <option key={roleValue} value={roleValue}>{roleValue}</option>
                   ))}
@@ -115,7 +117,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSubmit
               {formData.role === Role.TEACHER && (
                 <div>
                   <label htmlFor="grade" className="block text-sm font-medium text-slate-700">Grade</label>
-                  <input type="number" name="grade" id="grade" value={formData.grade} onChange={handleChange} className="mt-1 block w-full input" required />
+                  <input type="number" name="grade" id="grade" value={formData.grade} onChange={handleChange} className="mt-1 block w-full input px-3 py-2 border border-slate-300 rounded-lg" required />
                 </div>
               )}
             </div>

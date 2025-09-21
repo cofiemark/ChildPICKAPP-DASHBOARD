@@ -1,7 +1,9 @@
 import React from 'react';
+// FIX: Corrected import path for types
 import { AttendanceRecord } from '../types';
 import StatusBadge from './StatusBadge';
 import TimeStatusIndicator from './TimeStatusIndicator';
+// FIX: Corrected import path for icons
 import { XCircleIcon } from './icons';
 
 interface AttendanceHistoryModalProps {

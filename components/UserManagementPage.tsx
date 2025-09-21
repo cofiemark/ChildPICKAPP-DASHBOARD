@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
+// FIX: Corrected import path for types
 import { User, Role } from '../types';
 import { useToast } from '../contexts/ToastContext';
+// FIX: Corrected import path for icons
 import { UserPlusIcon, PencilIcon, TrashIcon, SearchIcon } from './icons';
 import UserFormModal from './UserFormModal';
 

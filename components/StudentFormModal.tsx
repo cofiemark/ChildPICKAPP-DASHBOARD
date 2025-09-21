@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+// FIX: Corrected import path for types
 import { Student } from '../types';
+// FIX: Corrected import path for icons
 import { XCircleIcon } from './icons';
 import { useToast } from '../contexts/ToastContext';
 

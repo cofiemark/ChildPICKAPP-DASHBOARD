@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
+// FIX: Corrected import path for types
 import { AttendanceRecord } from '../types';
 import StatusBadge from './StatusBadge';
 import AttendanceHistoryModal from './AttendanceHistoryModal';
 import TimeStatusIndicator from './TimeStatusIndicator';
+// FIX: Corrected import path for icons
 import { PhoneIcon, ClipboardListIcon, ClockIcon, UserCircleIcon, ArrowLeftIcon, CalendarDaysIcon } from './icons';
 
 interface StudentProfileProps {

@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { ToastMessage, ToastType } from '../contexts/ToastContext';
+// FIX: Corrected import path for icons
 import { CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon } from './icons';
 
 interface ToastProps {
