@@ -47,7 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, currentPage, setCurrentPage, on
     <>
     <aside className="w-64 bg-slate-800 text-white flex flex-col flex-shrink-0">
       <div className="h-16 flex items-center justify-center px-4 border-b border-slate-900">
-        <img src="https://placehold.co/100x100/ffffff/1e293b?text=Logo" alt="ChildPICK APP Logo" className="w-8 h-8 object-contain mr-2" />
+        <img src="https://vodcourqwrkxobvqpycn.supabase.co/storage/v1/object/public/student_photos/public/cropped-cropped-pixelcut-export-e1721939604918-1%20(1).png" alt="ChildPICK APP Logo" className="w-8 h-8 object-contain mr-2" />
         <span className="text-xl font-semibold">ChildPICK APP®</span>
       </div>
       <nav className="flex-1 px-4 py-4 space-y-2">

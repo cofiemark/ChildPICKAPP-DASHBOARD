@@ -116,7 +116,8 @@ export const getUsers = (): Promise<User[]> => mockApi(users);
 
 export const manualCheckInCheckOut = (studentId: string, guardianName: string, action: 'check-in' | 'check-out'): Promise<void> => {
     const today = new Date();
-    today.setHours(0,0,0,0);
+    // Use a date with time stripped out for consistent daily comparisons
+    const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
     const student = students.find(s => s.id === studentId);
     if (!student) return Promise.reject(new Error('Student not found'));
@@ -126,30 +127,56 @@ export const manualCheckInCheckOut = (studentId: string, guardianName: string, a
         guardian = { id: `g-temp-${Date.now()}`, name: guardianName, phone: 'N/A' };
     }
     
-    let record = attendanceRecords.find(r => r.student.id === studentId && new Date(r.date).getTime() === today.getTime());
+    let record = attendanceRecords.find(r => 
+        r.student.id === studentId && 
+        new Date(r.date).getTime() === todayDateOnly.getTime()
+    );
 
-    if (record) { // Update existing record
+    if (record) { // Update the existing record for today
         if (action === 'check-in') {
             record.checkInTime = new Date();
             record.checkInGuardian = guardian;
             record.status = AttendanceStatus.PRESENT;
-        } else {
+            // A new check-in nullifies any previous checkout for the day.
+            record.checkOutTime = null; 
+            record.checkOutGuardian = null;
+        } else { // 'check-out'
             record.checkOutTime = new Date();
             record.checkOutGuardian = guardian;
             record.status = AttendanceStatus.CHECKED_OUT;
         }
-    } else { // Create new record
-        record = {
-            id: `rec-manual-${Date.now()}`,
-            student,
-            date: today,
-            status: action === 'check-in' ? AttendanceStatus.PRESENT : AttendanceStatus.CHECKED_OUT,
-            checkInTime: action === 'check-in' ? new Date() : null,
-            checkOutTime: action === 'check-out' ? new Date() : null,
-            checkInGuardian: action === 'check-in' ? guardian : null,
-            checkOutGuardian: action === 'check-out' ? guardian : null,
-        };
-        attendanceRecords.unshift(record);
+    } else { // Create a new record for the day
+        const now = new Date();
+        let newRecord: AttendanceRecord;
+
+        if (action === 'check-in') {
+            newRecord = {
+                id: `rec-manual-${Date.now()}`,
+                student,
+                date: todayDateOnly,
+                status: AttendanceStatus.PRESENT,
+                checkInTime: now,
+                checkInGuardian: guardian,
+                checkOutTime: null,
+                checkOutGuardian: null,
+            };
+        } else { // action === 'check-out'
+            // If a student's first action of the day is a checkout, we assume they were present.
+            const schoolStartTime = new Date(todayDateOnly);
+            schoolStartTime.setHours(8, 30, 0, 0); // Default check-in time
+
+            newRecord = {
+                id: `rec-manual-${Date.now()}`,
+                student,
+                date: todayDateOnly,
+                status: AttendanceStatus.CHECKED_OUT,
+                checkInTime: schoolStartTime,
+                checkInGuardian: { id: 'g-system', name: 'System (Assumed)', phone: 'N/A' },
+                checkOutTime: now,
+                checkOutGuardian: guardian,
+            };
+        }
+        attendanceRecords.unshift(newRecord);
     }
     return mockApi(undefined);
 };

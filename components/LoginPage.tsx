@@ -44,7 +44,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-4">
       <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-lg">
         <div className="flex justify-center mb-6">
-          <img src="https://placehold.co/100x100/6366f1/ffffff?text=Logo" alt="ChildPICK APP Logo" className="w-12 h-12 object-contain" />
+          <img src="https://vodcourqwrkxobvqpycn.supabase.co/storage/v1/object/public/student_photos/public/cropped-cropped-pixelcut-export-e1721939604918-1%20(1).png" alt="ChildPICK APP Logo" className="w-12 h-12 object-contain" />
         </div>
         <h2 className="text-2xl font-bold text-center text-slate-800">Welcome to ChildPICK® APP</h2>
         <p className="text-center text-slate-500 mb-8">Sign in to your account</p>

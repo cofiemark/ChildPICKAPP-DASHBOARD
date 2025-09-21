@@ -154,6 +154,7 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({ records, onRowClick, 
             <tr>
               <SortableHeader columnKey="studentName" title="Student Name" />
               <SortableHeader columnKey="studentId" title="Student ID" />
+              <SortableHeader columnKey="grade" title="Grade" />
               <th scope="col" className="px-6 py-3">Check-in Guardian</th>
               <th scope="col" className="px-6 py-3">Check-out Guardian</th>
               <SortableHeader columnKey="checkIn" title="Check-in" />
@@ -173,6 +174,7 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({ records, onRowClick, 
                     {record.student.name}
                     </th>
                     <td className="px-6 py-4">{record.student.id}</td>
+                    <td className="px-6 py-4">{record.student.grade}</td>
                     <td className="px-6 py-4">{record.checkInGuardian?.name || '—'}</td>
                     <td className="px-6 py-4">{record.checkOutGuardian?.name || '—'}</td>
                     <td className="px-6 py-4">
@@ -188,7 +190,7 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({ records, onRowClick, 
                 ))
             ) : (
                 <tr>
-                    <td colSpan={7} className="text-center py-8 text-slate-500">
+                    <td colSpan={8} className="text-center py-8 text-slate-500">
                         No records found for the selected criteria.
                     </td>
                 </tr>
